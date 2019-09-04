@@ -66,14 +66,6 @@ var inquirerQuestions = [
     
 ];
 
-// set `OUTPUT` to false in .env to disable terminal output    
-old_console_log = console.log;
-console.log = function() {
-    if ( process.env.OUTPUT ) {
-        old_console_log.apply(this, arguments);
-    }
-}
-
 // function nullToNA(obj) {
 //     for (var key in obj) {
 //         if (obj[key] !== null && obj[key] != ""){
