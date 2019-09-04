@@ -16,7 +16,7 @@ Useful if you install tools per course not per account, and you need to change s
 7. Check found tools and courses, if correct, proceed.
 6. Check if values were updated correctly, and hopefully you're done!
 
-**Note:**Example external tool object below.
+*Note:* Example external tool object below.
 You can change fields that can be modified in `inquirerQuestions` variable under `toolFields`.
 `toolFields` object is passed directly as `body` in PUT request to the API.
 
