@@ -147,7 +147,7 @@ async function checkTools (course, queryToolName){
     };
 }
 
-async function searchCourses(config) {
+async function searchCourses() {
     let courseSearchUrl = '/accounts/'+config.account+'/courses';
     for await (let course of canvas.list(courseSearchUrl)) {
         let yearStarted = (new Date(course.start_at)).getFullYear();
@@ -166,7 +166,7 @@ async function asyncForEach(array, callback) {
     }
 }
 
-async function getNewToolFields (config){
+async function getNewToolFields (){
     await asyncForEach(Object.keys(config.toolFields), async (key) => {
         await inquirer
         .prompt({
@@ -175,12 +175,12 @@ async function getNewToolFields (config){
             message: 'Enter new value for '+key+':'
         })
         .then(answers => {
-            config.toolFields[key] = JSON.stringify(answers.newValue)
+            config.toolFields[key] = answers.newValue
         });
     });
 }
 
-async function getConfig(config){
+async function getConfig(){
     await inquirer
         .prompt(inquirerQuestions)
         .then(answers => {
@@ -192,9 +192,8 @@ async function getConfig(config){
 }
 
 async function start() {
-    await getConfig(config)
-    await getNewToolFields(config)
-    console.log(config.toolFields)
+    await getConfig()
+    await getNewToolFields()
     console.log('-------------------------------------------------------------------------------');
     console.log(`Scanning courses in an account with ID: "`+config.account+`".`);
     console.log(`Searching for "`+config.toolName+`" external tool. This might take a while...`);
@@ -208,7 +207,7 @@ async function start() {
             return;
         }
     }
-    await searchCourses(config)
+    await searchCourses()
     console.log('-------------------------------------------------------------------------------');
     if (foundToolsList.length !== 0){
         console.log('Printing list of found Tools...')
@@ -218,6 +217,7 @@ async function start() {
         await asyncForEach(foundToolsList, async (foundTool) => {
             await updateTool(foundTool.courseId, foundTool.toolId)
         });
+        console.log('Done and done. Exiting..')
     } else {
         console.log('No external tools of name: "'+config.toolName+'" found. Quitting..')
         return;
