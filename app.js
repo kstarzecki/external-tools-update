@@ -16,6 +16,56 @@ let foundToolsList = [],
                         toolFields:''
                      };
   
+var inquirerQuestions = [
+    {
+        type: 'input',
+        name: 'year',
+        message: 'Omit courses starting before year: (0 or Enter to scan all courses)',
+        default: 0
+    },
+    {
+        type: 'input',
+        name: 'account',
+        message: 'Which account you want to search?',
+        default: 1
+    },
+    {
+        type: 'text',
+        name: 'toolName',
+        message: 'Which tool you want to modify?',
+        validate: function(answer) {
+            if (answer.length < 1) {
+                return 'You must choose at least one field.';
+            }
+            return true;
+        }
+    },
+    {
+        type: 'checkbox',
+        message: 'Select External Tool Fields to Modify',
+        name: 'toolFields',
+        choices: [
+            new inquirer.Separator('External Tool Fields'),
+            {
+                name: 'name'
+            },
+            {
+                name: 'url'
+            },
+            {
+                name: 'domain'
+            }
+        ],
+        validate: function(answer) {
+            if (answer.length < 1) {
+                return 'You must choose at least one field.';
+            }
+            return true;
+        }
+    }
+    
+];
+
 // set `OUTPUT` to false in .env to disable terminal output    
 old_console_log = console.log;
 console.log = function() {
@@ -132,83 +182,19 @@ async function getNewToolFields (config){
 
 async function getConfig(config){
     await inquirer
-        .prompt({
-            type: 'input',
-            name: 'year',
-            message: 'Omit courses starting before year: (0 or Enter to scan all courses)',
-            default: 0
-            // ,
-            // validate: function(value) {
-            //     var valid = !isNaN(parseFloat(value));
-            //     return valid || 'Please enter a number';
-            // },
-            // filter: Number
-        })
+        .prompt(inquirerQuestions)
         .then(answers => {
             Object.assign(config, answers)
-          });
-    await inquirer
-        .prompt({
-            type: 'input',
-            name: 'account',
-            message: 'Which account you want to search?',
-            default: 1
-            // ,
-            // validate: function(value) {
-            //     var valid = !isNaN(parseFloat(value));
-            //     return valid || 'Please enter a number';
-            // },
-            // filter: Number
-        })
-        .then(answers => {
-            Object.assign(config, answers)
-          });
-    await inquirer
-        .prompt({
-            type: 'input',
-            name: 'toolName',
-            message: 'Which tool you want to modify?'
-        })
-        .then(answers => {
-            Object.assign(config, answers)
-          });
-    await inquirer
-        .prompt([
-            {
-            type: 'checkbox',
-            message: 'Select External Tool Fields to Modify',
-            name: 'toolFields',
-            choices: [
-                new inquirer.Separator('External Tool Fields'),
-                {
-                name: 'name'
-                },
-                {
-                name: 'url'
-                },
-                {
-                name: 'domain'
-                }
-            ],
-            validate: function(answer) {
-              if (answer.length < 1) {
-                return 'You must choose at least one field.';
-              }
-              return true;
-            }
-          }
-        ])
-        .then(answers => {
             var answersObj = {}
             answers.toolFields.forEach((key) => answersObj[key] = '');
             config.toolFields = answersObj
-        });
-        // console.log(config)
+          });
 }
 
 async function start() {
     await getConfig(config)
     await getNewToolFields(config)
+    console.log(config.toolFields)
     console.log('-------------------------------------------------------------------------------');
     console.log(`Scanning courses in an account with ID: "`+config.account+`".`);
     console.log(`Searching for "`+config.toolName+`" external tool. This might take a while...`);
