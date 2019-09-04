@@ -1,17 +1,21 @@
 require('dotenv').config();
-const Canvas            = require('@kth/canvas-api'),
-      inquirer          = require('inquirer'),
-      token             = process.env.CANVAS_API_TOKEN_TEST,
-      url               = process.env.CANVAS_API_URL_TEST,
-      canvas            = Canvas(url, token),
-      args              = process.argv.slice(2);
+const Canvas    = require('@kth/canvas-api'),
+      inquirer  = require('inquirer'),
+      token     = process.env.CANVAS_API_TOKEN_TEST,
+      url       = process.env.CANVAS_API_URL_TEST,
+    //   token     = process.env.CANVAS_API_TOKEN_PROD,
+    //   url       = process.env.CANVAS_API_URL_PROD,
+      canvas    = Canvas(url, token),
+      args      = process.argv.slice(2);
 
-let foundExternalToolsList   = [],
-    searchYear               = 0;
-
-let queryToolName   = 'KTH Möbius',
-    newToolName     = 'KTH Möbius!';
-    
+let foundToolsList = [],
+    config         = {
+                        year: 0,
+                        account:'', 
+                        toolName:'', 
+                        toolFields:''
+                     };
+  
 // set `OUTPUT` to false in .env to disable terminal output    
 old_console_log = console.log;
 console.log = function() {
@@ -41,15 +45,6 @@ console.log = function() {
 //     console.log('');
 // }
 
-// const { createButton } = await inquirer.prompt({
-//     type: 'confirm',
-//     name: 'createButton',
-//     message: 'Do you want to create a link in the menu?'
-//   })
-//   if (!createButton) {
-//     return
-//   }
-
 function isNumber (value) {
     return typeof value === 'number' && isFinite(value);
 }
@@ -70,63 +65,154 @@ function saveTool (arr, course, externalTool){
     arr.push(createShortObject(course, externalTool));
 }
 
-function checkArgs (args){
-    if (args[0] === 'year' || typeof args[0] === 'undefined'){
-        if (args[0] === 'year') {
-            args[2] = args[1]
-            args[1] = args[0];
-            args[0] = '1';
-        } else {
-            args[1] = args[0];
-            args[0] = '1';
-        }
-    }
+async function updateTool (courseId, toolId) {
+    const body = config.toolFields
+    await canvas.requestUrl(`/courses/`+courseId+`/external_tools/`+toolId, 'PUT', body)
+    console.log('Done with toolId: '+toolId+'! Results below:')
+    let updatedTool = await canvas.requestUrl('/courses/'+courseId+'/external_tools/'+toolId)
+    let course = await canvas.requestUrl('/courses/'+courseId)
+    console.log(createShortObject(course.body, updatedTool.body))
 }
 
-async function checkTools (course){
+async function sanityCheck (foundToolsList){
+    await inquirer
+        .prompt({
+            type: 'confirm',
+            name: 'checked',
+            message: 'Are you sure you want to apply changes to '+foundToolsList.length+' external tools?',
+            default: false
+        })
+        .then(answers => {
+            if (answers.checked === false){
+                return
+            }
+        });
+}
+
+async function checkTools (course, queryToolName){
     for await (let externalTool of canvas.list('/courses/'+course.id+'/external_tools')){
         if (externalTool !== [] && externalTool.name === queryToolName) {
-            await saveTool(foundExternalToolsList, course, externalTool)
+            await saveTool(foundToolsList, course, externalTool)
         }
     };
 }
 
-async function updateTool (courseId, toolId) {
-    const body = {
-        // domain: null,
-        // url: null,
-        // consumer_key: null,
-        name: newToolName
-    }
-    await canvas.requestUrl(`/courses/`+courseId+`/external_tools/`+toolId, 'PUT', body)
-    console.log('Done with toolId: '+toolId+'! Performing Check.')
-    let updatedTool = await canvas.requestUrl('/courses/'+courseId+'/external_tools/'+toolId)
-    let course = await canvas.requestUrl('/courses/'+courseId)
-    console.log(createShortObject(course.body, updatedTool.body))
-
-}
-
-async function searchCourses(courseSearchUrl) {
+async function searchCourses(config) {
+    let courseSearchUrl = '/accounts/'+config.account+'/courses';
     for await (let course of canvas.list(courseSearchUrl)) {
-        // if ((new Date(course.start_at)).getFullYear() >= searchYear){
         let yearStarted = (new Date(course.start_at)).getFullYear();
-        if (yearStarted >= searchYear || course.start_at === null){
+        if (yearStarted >= config.year || course.start_at === null){
             // Courses with start date = null, get a 1970 in 'yearStarted' variable, hence direct check
-            await checkTools(course)
+            await checkTools(course, config.toolName)
         } else {
             continue;
         }
+    }    
+}
+
+async function asyncForEach(array, callback) {
+    for (let index = 0; index < array.length; index++) {
+      await callback(array[index], index, array);
     }
 }
 
+async function getNewToolFields (config){
+    await asyncForEach(Object.keys(config.toolFields), async (key) => {
+        await inquirer
+        .prompt({
+            type: 'input',
+            name: 'newValue',
+            message: 'Enter new value for '+key+':'
+        })
+        .then(answers => {
+            config.toolFields[key] = JSON.stringify(answers.newValue)
+        });
+    });
+}
+
+async function getConfig(config){
+    await inquirer
+        .prompt({
+            type: 'input',
+            name: 'year',
+            message: 'Omit courses starting before year: (0 or Enter to scan all courses)',
+            default: 0
+            // ,
+            // validate: function(value) {
+            //     var valid = !isNaN(parseFloat(value));
+            //     return valid || 'Please enter a number';
+            // },
+            // filter: Number
+        })
+        .then(answers => {
+            Object.assign(config, answers)
+          });
+    await inquirer
+        .prompt({
+            type: 'input',
+            name: 'account',
+            message: 'Which account you want to search?',
+            default: 1
+            // ,
+            // validate: function(value) {
+            //     var valid = !isNaN(parseFloat(value));
+            //     return valid || 'Please enter a number';
+            // },
+            // filter: Number
+        })
+        .then(answers => {
+            Object.assign(config, answers)
+          });
+    await inquirer
+        .prompt({
+            type: 'input',
+            name: 'toolName',
+            message: 'Which tool you want to modify?'
+        })
+        .then(answers => {
+            Object.assign(config, answers)
+          });
+    await inquirer
+        .prompt([
+            {
+            type: 'checkbox',
+            message: 'Select External Tool Fields to Modify',
+            name: 'toolFields',
+            choices: [
+                new inquirer.Separator('External Tool Fields'),
+                {
+                name: 'name'
+                },
+                {
+                name: 'url'
+                },
+                {
+                name: 'domain'
+                }
+            ],
+            validate: function(answer) {
+              if (answer.length < 1) {
+                return 'You must choose at least one field.';
+              }
+              return true;
+            }
+          }
+        ])
+        .then(answers => {
+            var answersObj = {}
+            answers.toolFields.forEach((key) => answersObj[key] = '');
+            config.toolFields = answersObj
+        });
+        // console.log(config)
+}
+
 async function start() {
-    checkArgs(args);
-    let acc = args[0];
-    let courseSearchUrl = '/accounts/'+acc+'/courses';
-    console.log('-------------------------------------------------------');
-    console.log(`Scanning courses in "`+courseSearchUrl+`".`);
-    console.log(`Searching for "`+queryToolName+`" external tool.`);
-    if (args[1] === 'year'){
+    await getConfig(config)
+    await getNewToolFields(config)
+    console.log('-------------------------------------------------------------------------------');
+    console.log(`Scanning courses in an account with ID: "`+config.account+`".`);
+    console.log(`Searching for "`+config.toolName+`" external tool. This might take a while...`);
+    if (config.year !== 0){
         if (isNumber(parseInt(args[2], 10))){
             searchYear = parseInt(args[2], 10);
             console.log('Omitting all courses started before '+searchYear+'.');
@@ -136,9 +222,20 @@ async function start() {
             return;
         }
     }
-    await searchCourses(courseSearchUrl)
-    console.log(foundExternalToolsList)
-    await updateTool(foundExternalToolsList[0].courseId, foundExternalToolsList[0].toolId)
+    await searchCourses(config)
+    console.log('-------------------------------------------------------------------------------');
+    if (foundToolsList.length !== 0){
+        console.log('Printing list of found Tools...')
+        console.log(foundToolsList)
+        console.log('-------------------------------------------------------------------------------');
+        await sanityCheck(foundToolsList)
+        await asyncForEach(foundToolsList, async (foundTool) => {
+            await updateTool(foundTool.courseId, foundTool.toolId)
+        });
+    } else {
+        console.log('No external tools of name: "'+config.toolName+'" found. Quitting..')
+        return;
+    }
 }
 
 start();
