@@ -1,5 +1,6 @@
 ## A simple app to batch-update external tools in Canvas
-Useful if you install tools per course not per account, and you need to change something in the configuration.
+
+Useful if you install tools per course (not per account), and you need to change something in the configuration.
 
 
 ### How to use
@@ -9,7 +10,7 @@ Useful if you install tools per course not per account, and you need to change s
 3. Know which account you want to apply changes to
 4. Know which fields you want to change with this tool. Right now possible are:
     * name
-    * url 
+    * url
     * domain
 5. `npm start` to run the app. Fill the values into inquirer.
 6. Wait for app to scrub the account in search of the provided tool name.
