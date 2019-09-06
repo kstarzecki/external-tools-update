@@ -58,22 +58,19 @@ var inquirerQuestions = [
       },
       {
         name: 'domain'
-      },
-      {
-        name: 'text'
       }
     ],
-    validate: function (answer) {
-      if (answer.length < 1) {
-        return 'You must choose at least one field.'
-      }
-      return true
-    },
     filter: function (answer) {
       return answer.reduce((accumulator, currentValue) => {
         accumulator[currentValue] = ''
         return accumulator
       }, {})
+    },
+    validate: function (answer) {
+      if (Object.keys(answer).length < 1) {
+        return 'You must choose at least one field.'
+      }
+      return true
     }
   }
 ]
@@ -142,9 +139,9 @@ async function searchCourses () {
   }
 }
 
-async function asyncForEach (toolFields, callback) {
-  for (const toolField of toolFields) {
-    await callback(toolField)
+async function asyncForEach (arr, callback) {
+  for (const item of arr) {
+    await callback(item)
   }
 }
 
