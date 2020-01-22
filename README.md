@@ -1,6 +1,6 @@
 ## A simple app to batch-update external tools in Canvas
 
-Useful if you install tools per course (not per account), and you need to change something in the configuration.
+Useful if you install tools per course (not per account), and you need to check or change something in the configuration.
 
 
 ### How to use
