@@ -102,7 +102,7 @@ async function getSearchTerm () {
     .prompt({
       type: 'input',
       name: 'searchTerm',
-      message: 'Enter your search term? (exact name / url)',
+      message: 'Enter your search term (exact):',
       validate: function (answer) {
         if (answer.length < 1) {
           return 'You must specify the search term!'
