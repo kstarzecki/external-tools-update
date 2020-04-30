@@ -222,16 +222,20 @@ async function checkToolsByURL (course, searchTerm) {
 
 async function searchCourses () {
   const courseSearchUrl = `/accounts/${config.account}/courses`
-  for await (const course of canvas.list(courseSearchUrl)) {
-    const yearStarted = (new Date(course.start_at)).getFullYear()
-    if (yearStarted >= config.year || course.start_at === null) {
-      // Courses with start date = null, get a 1970 in `yearStarted` variable, hence direct check
-      if (config.searchParam === 'name') {
-        await checkToolsByName(course, config.searchTerm)
-      } else {
-        await checkToolsByURL(course, config.searchTerm)
+  try {
+    for await (const course of canvas.list(courseSearchUrl)) {
+      const yearStarted = (new Date(course.start_at)).getFullYear()
+      if (yearStarted >= config.year || course.start_at === null) {
+        // Courses with start date = null, get a 1970 in `yearStarted` variable, hence direct check
+        if (config.searchParam === 'name') {
+          await checkToolsByName(course, config.searchTerm)
+        } else {
+          await checkToolsByURL(course, config.searchTerm)
+        }
       }
     }
+  } catch (e) {
+    console.log('CAUGHT AN ERROR: ' + e + '. Continuing...')
   }
 }
 
