@@ -16,6 +16,9 @@ const config = {
   modify: '',
   toolFields: {}
 }
+const mode = {
+  modeSelect: ''
+}
 
 var inquirerQuestions = [
   {
@@ -44,6 +47,27 @@ var inquirerQuestions = [
   }
 ]
 
+var inquirerQuestionsForAllTools = [
+  {
+    type: 'input',
+    name: 'year',
+    message: 'Omit courses starting before year: (0 or Enter to scan all courses) \n  Note: courses without start date will always be included.',
+    default: 0,
+    validate: function (answer) {
+      if (!isNumber(parseInt(answer, 10))) {
+        return 'Please define year correctly!'
+      }
+      return true
+    }
+  },
+  {
+    type: 'input',
+    name: 'account',
+    message: 'Which account do you want to search?',
+    default: 1
+  }
+]
+
 function isNumber (value) {
   return typeof value === 'number' && isFinite(value)
 }
@@ -53,6 +77,10 @@ function createShortObject (course, externalTool) {
 
   shortObject.courseId = course.id
   shortObject.courseCode = course.course_code
+  shortObject.createdAt = course.created_at
+  shortObject.startAt = course.start_at
+  shortObject.accountId = course.account_id
+  shortObject.rootAccountId = course.root_account_id
   shortObject.toolId = externalTool.id
   shortObject.toolName = externalTool.name
   shortObject.toolDomain = externalTool.domain
@@ -74,6 +102,28 @@ async function saveToCsv (arr, file) {
   console.log('List was saved as ' + file + '.')
   console.log('-------------------------------------------------------------------------------')
   console.log('')
+}
+
+async function getMode () {
+  await inquirer
+    .prompt({
+      type: 'list',
+      message: 'Select Mode',
+      name: 'modeSelect',
+      choices: [
+        new inquirer.Separator('Search Mode Select'),
+        {
+          name: 'single'
+        },
+        {
+          name: 'all'
+        }
+      ]
+    })
+    .then(answers => {
+      mode.modeSelect = answers.modeSelect
+      Object.assign(mode, answers)
+    })
 }
 
 async function getSearchMethod () {
@@ -115,9 +165,9 @@ async function getSearchTerm () {
     })
 }
 
-async function getConfig () {
+async function getConfig (questions) {
   await inquirer
-    .prompt(inquirerQuestions)
+    .prompt(questions)
     .then(answers => {
       Object.assign(config, answers)
     })
@@ -202,6 +252,13 @@ async function sanityCheck (foundTools) {
     })
 }
 
+async function getAllTools (course) {
+  const toolSearchUrl = `/courses/${course.id}/external_tools`
+  for await (const externalTool of canvas.list(toolSearchUrl)) {
+    foundTools.push(createShortObject(course, externalTool))
+  };
+}
+
 async function checkToolsByName (course, searchTerm) {
   const toolSearchUrl = `/courses/${course.id}/external_tools`
   for await (const externalTool of canvas.list(toolSearchUrl)) {
@@ -227,10 +284,14 @@ async function searchCourses () {
       const yearStarted = (new Date(course.start_at)).getFullYear()
       if (yearStarted >= config.year || course.start_at === null) {
         // Courses with start date = null, get a 1970 in `yearStarted` variable, hence direct check
-        if (config.searchParam === 'name') {
-          await checkToolsByName(course, config.searchTerm)
+        if (mode.modeSelect !== 'all') {
+          if (config.searchParam === 'name') {
+            await checkToolsByName(course, config.searchTerm)
+          } else {
+            await checkToolsByURL(course, config.searchTerm)
+          }
         } else {
-          await checkToolsByURL(course, config.searchTerm)
+          await getAllTools(course)
         }
       }
     }
@@ -250,12 +311,17 @@ async function updateTool (courseId, toolId) {
 }
 
 async function start () {
-  await getSearchMethod()
-  await getSearchTerm()
-  await getConfig()
-  if (config.modify) {
-    await getToolFields()
-    await getNewToolFields()
+  await getMode()
+  if (mode.modeSelect !== 'all') {
+    await getSearchMethod()
+    await getSearchTerm()
+    await getConfig(inquirerQuestions)
+    if (config.modify) {
+      await getToolFields()
+      await getNewToolFields()
+    }
+  } else {
+    await getConfig(inquirerQuestionsForAllTools)
   }
   await csvOption()
   console.log('-------------------------------------------------------------------------------')
