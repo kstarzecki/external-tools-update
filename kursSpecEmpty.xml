@@ -1,0 +1,151 @@
+<?xml version="1.0" encoding="utf-8"?>
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema" xmlns="Kursspecifikation_ver_2" targetNamespace="Kursspecifikation_ver_2" elementFormDefault="qualified">
+	<xs:element name="Kursspecifikation_ver_2">
+		<xs:complexType>
+			<xs:sequence>
+				<xs:element name="Identitet" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">lämnas tomt</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Beskrivning" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Avser typ av handling. Fast värde: Examinationsuppgifter></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Pakettyp" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Avser typ av informationspaket. Fast värde AIP></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="DatumOchTid" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Vilken tidstämpel ska/kan användas?></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Leveranstyp" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Fast värde. Kursinformation></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Leveransspecifikation" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Fast värde. Kursspecifikation_ver_2></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Leveransoverenskommelse" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Lämnas tomt></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="ArkivbildareNamn" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Fast värde. KTH></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="ArkivbildareIdentitetskod" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Fast värde. 202100-3054></xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="SystemNamn" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">källsystemets namn</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="LevererandeSystemNamn" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">namn på skriptet som genererat arkivpaketets metadata.xml-fil</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="LevererandeSystemVersion" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">version på skriptet som genererat arkivpaketets metadata.xml-fil</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="LevererandeOrganisationNamn" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Fast värde. KTH</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Gallring" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">false eller true</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Sekretess" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">false eller true</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Informationsklass" type="xs:integer">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">värde mellan 0 till 5</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Referenskod" type="xs:string">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Kod enligt Klassifikationsschema för arkivredovisning. fast värde: 3.4.2</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="SkyddadePersonuppgifter" type="xs:boolean">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">Fast värde. false</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Notering" type="xs:string" minOccurs="0" maxOccurs="unbounded">
+					<xs:annotation>
+						<xs:documentation xml:lang="se">här kan arkivpaketet beskrivas, alternativt kan referens till andra dokument anges</xs:documentation>
+					</xs:annotation>
+				</xs:element>
+				<xs:element name="Kurs" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Kurskod" type="xs:string">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">hämtas från källmetadata "Kurskod"</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Kursnamn" type="xs:string">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">hämtas från källmetadata "Kursnamn"</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Kurstillfalle" type="xs:string">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">hämtas från källmetadata "Kurstillfälle"</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+				<xs:element name="Bilaga" minOccurs="0" maxOccurs="unbounded">
+					<xs:complexType>
+						<xs:sequence>
+							<xs:element name="Filnamn" type="xs:string">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">hämtas från ....</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Beskrivning" type="xs:string">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">Om kompletterande beskrivning behövs för bilagan</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Bevaras" type="xs:boolean">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">Fast värde. True</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+							<xs:element name="Tid" type="xs:dateTime">
+								<xs:annotation>
+									<xs:documentation xml:lang="se">Vilken tidstämpel kan användas? finns metadata för tenta senast uppladdad ?</xs:documentation>
+								</xs:annotation>
+							</xs:element>
+						</xs:sequence>
+					</xs:complexType>
+				</xs:element>
+			</xs:sequence>
+		</xs:complexType>
+	</xs:element>
+</xs:schema>
