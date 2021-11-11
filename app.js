@@ -20,7 +20,7 @@ const mode = {
   modeSelect: ''
 }
 
-var inquirerQuestions = [
+const inquirerQuestions = [
   {
     type: 'input',
     name: 'year',
@@ -47,7 +47,7 @@ var inquirerQuestions = [
   }
 ]
 
-var inquirerQuestionsForAllTools = [
+const inquirerQuestionsForAllTools = [
   {
     type: 'input',
     name: 'year',

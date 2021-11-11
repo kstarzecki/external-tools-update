@@ -51,12 +51,12 @@ function onlyUnique (value, index, self) {
 
 // process the file urls
 function getUniqueFileUrls (string) {
-  var urls = extractUrls(string)
-  var re = / *\/files\/(\d+)/
-  var oarr = []
+  const urls = extractUrls(string)
+  const re = / *\/files\/(\d+)/
+  const oarr = []
   if (typeof urls !== 'undefined') {
     reStripAndReconstruct(re, urls, oarr)
-    var unique = oarr.filter(onlyUnique)
+    const unique = oarr.filter(onlyUnique)
     return unique
   } else {
     return []
@@ -89,7 +89,7 @@ function saveXML (courseId, arr, dir, eDir, kursSpecName) {
 
 // get assignment id from array
 function getAssignmentDetails (arr) {
-  var arrOut = []
+  const arrOut = []
   arr.forEach(element => {
     arrOut.push(element.id)
   })
@@ -155,7 +155,7 @@ async function saveAssignments (courseId, parsedAssignments, dir, eDir, attachme
   try {
     parsedAssignments.forEach(element => {
       const sanitizedElementName = replaceSpecialCharacters(sanitize(element.name))
-      var prefix = ''
+      let prefix = ''
       if (element.type === 'online_upload') {
         prefix = 'UPPGIFT_'
       }
@@ -197,16 +197,16 @@ async function saveAssignments (courseId, parsedAssignments, dir, eDir, attachme
 // process course
 async function getCourse (courseId) {
   console.info(`@ CID: ${courseId} - BEGIN`)
-  var attachmentList = []
-  var attachmentDate = []
-  var fileDownloadList = []
+  const attachmentList = []
+  const attachmentDate = []
+  const fileDownloadList = []
   const parsedAssignments = []
   const courseInfo = await canvas.get(`courses/${courseId}`)
   const assignments = await canvas.get(`courses/${courseId}/assignments`)
   const assIds = getAssignmentDetails(assignments.body)
-  var eDir = './Export'
-  var dir = `/${replaceSpecialCharacters(sanitize(courseInfo.body.name))}`
-  var aDir = ''
+  const eDir = './Export'
+  const dir = `/${replaceSpecialCharacters(sanitize(courseInfo.body.name))}`
+  const aDir = ''
   handleDirectory(`${eDir}${dir}`)
   handleDirectory(`${eDir}${dir}${aDir}`)
   await getAssignments(courseId, assIds, parsedAssignments, fileDownloadList)
@@ -222,14 +222,14 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
       if (assignment.body.workflow_state === 'published') { // if published
         if (assignment.body.submission_types.includes('online_upload') || assignment.body.is_quiz_assignment) { // if upload or classic quiz
           if (assignment.body.submission_types.includes('online_upload')) { // for upload
-            var sanitizedDescription = sanitizeHtml(assignment.body.description, {
+            const sanitizedDescription = sanitizeHtml(assignment.body.description, {
               allowedTags: ['img', 'a', 'em'],
               allowedAttributes: {
                 a: ['href'],
                 img: ['src', 'alt', 'data-api-endpoint']
               }
             })
-            var fileIdList = getUniqueFileUrls(sanitizedDescription)
+            let fileIdList = getUniqueFileUrls(sanitizedDescription)
             console.log(`- CID: ${courseId} - Getting Assignment ID: ${assignment.body.id}: ${assignment.body.name}`)
             if (fileIdList !== [] && fileIdList !== undefined) { // can be undefined for a number of reasons
               var fileObjArr = await processFiles(courseId, fileIdList)
@@ -243,7 +243,7 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
             } else {
               fileIdList = []
             }
-            var currentAss = createAssignmentObject(assignment.body.id, assignment.body.name, sanitizedDescription, fileObjArr, assignment.body.updated_at, 'online_upload')
+            const currentAss = createAssignmentObject(assignment.body.id, assignment.body.name, sanitizedDescription, fileObjArr, assignment.body.updated_at, 'online_upload')
             parsedAssignments.push(currentAss)
           } else { // for classic quiz
             const quizId = assignment.body.quiz_id
@@ -268,7 +268,7 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
                 }),
                 answers: quizQuestionAnswersArr.join(', ')
               }
-              var processedQuestionString = (
+              const processedQuestionString = (
                 `Question Name: ${processedQuestion.name}`).concat('\n',
                 `Quiz Question Type: ${processedQuestion.type}`, '\n',
                 '------ QUIZ QUESTION TEXT BEGIN ------', '\n',
@@ -279,8 +279,8 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
               quizQuestionsArr.push(processedQuestionString)
             }
 
-            var quizQuestionsString = quizQuestionsArr.join('\n')
-            var qFileIdList = getUniqueFileUrls(quizQuestionsString)
+            const quizQuestionsString = quizQuestionsArr.join('\n')
+            let qFileIdList = getUniqueFileUrls(quizQuestionsString)
             console.log(`- CID: ${courseId} - Getting Assignment ID: ${assignment.body.id}: ${assignment.body.name}`)
             if (qFileIdList !== [] && qFileIdList !== undefined) { // can be undefined for a number of reasons
               var qFileObjArr = await processFiles(courseId, qFileIdList)
@@ -294,7 +294,7 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
             } else {
               qFileIdList = []
             }
-            var currentQuiz = createAssignmentObject(assignment.body.id, assignment.body.name, quizQuestionsString, qFileObjArr, assignment.body.updated_at, 'online_quiz')
+            const currentQuiz = createAssignmentObject(assignment.body.id, assignment.body.name, quizQuestionsString, qFileObjArr, assignment.body.updated_at, 'online_quiz')
             parsedAssignments.push(currentQuiz)
             // console.log(currentQuiz)
           }
@@ -427,16 +427,16 @@ async function downloadAttachmentsAndMakeXml (filesList, dir, aDir, eDir, attach
 async function makeXml (courseInfo, attachmentList, attachmentDate, dir, eDir) {
   // read empty xml, and make it a js object
   const courseId = courseInfo.body.id
-  var xml = fs.readFileSync('kursSpecEmpty_2_1.xml', 'utf8')
-  var readOptions = { ignoreComment: false, alwaysChildren: true }
-  var kursSpec = convert.xml2js(xml, readOptions)
+  const xml = fs.readFileSync('kursSpecEmpty_2_1.xml', 'utf8')
+  const readOptions = { ignoreComment: false, alwaysChildren: true }
+  const kursSpec = convert.xml2js(xml, readOptions)
 
   // current timestamp in milliseconds
   const dateTs = convertDate(Date.now(), 'd')
   const kursKodRe = /[A-ZÅÄÖ]{2}\d{4}/
   const tentaKodRe = /_(.*?)_/
-  var kursKod = courseInfo.body.course_code
-  var tentaKod = courseInfo.body.sis_course_id
+  let kursKod = courseInfo.body.course_code
+  let tentaKod = courseInfo.body.sis_course_id
   if (kursKodRe.exec(courseInfo.body.sis_course_id) !== null) {
     tentaKod = (tentaKodRe.exec(courseInfo.body.sis_course_id))[1]
   }
@@ -485,8 +485,8 @@ async function makeXml (courseInfo, attachmentList, attachmentDate, dir, eDir) {
   const attachmentSnippet = JSON.parse(JSON.stringify(kursSpec.elements[1].elements[38])) // move attachment section of xml to variable
   kursSpec.elements[1].elements.splice(38, 1) // remove attachment section from xml
 
-  for (var i = 0; i < attachmentList.length; i++) {
-    var tObj = JSON.parse(JSON.stringify(attachmentSnippet)) // copy stencil
+  for (let i = 0; i < attachmentList.length; i++) {
+    const tObj = JSON.parse(JSON.stringify(attachmentSnippet)) // copy stencil
 
     tObj.elements[0].elements[0] = { // assign file name to field
       type: 'text',
@@ -503,9 +503,9 @@ async function makeXml (courseInfo, attachmentList, attachmentDate, dir, eDir) {
   }
 
   // write xml to file
-  var writeOptions = { compact: false, ignoreComment: false, spaces: 4, fullTagEmptyElement: true }
-  var kursSpecName = `Kursspecifikation-${kursKod}-(${tentaKod})-${dateTs}`
-  var kursSpecArr = []
+  const writeOptions = { compact: false, ignoreComment: false, spaces: 4, fullTagEmptyElement: true }
+  const kursSpecName = `Kursspecifikation-${kursKod}-(${tentaKod})-${dateTs}`
+  const kursSpecArr = []
   kursSpecArr.push(convert.js2xml(kursSpec, writeOptions))
   saveXML(courseId, kursSpecArr, dir, eDir, sanitize(kursSpecName))
 }
