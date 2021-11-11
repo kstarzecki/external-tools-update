@@ -8,8 +8,10 @@ const token = process.env.CANVAS_API_TOKEN_TEST
 const url = process.env.CANVAS_API_URL_TEST
 const canvas = Canvas(url, token)
 
+// Export files
 const teacherFile = './teacherOutput.csv'
 const studentFile = './studentOutput.csv'
+// Source file (mentimeter user export)
 const csvFilePath = './members-export.csv'
 
 const canvasEmailList = []
@@ -33,7 +35,7 @@ async function getUserRoles (emails, arr) {
       const userID = users.body[0].id
       try {
         const enrols = await canvas.get(`users/${userID}/enrollments`)
-        var isteacher = false
+        var isteacher = false // var on purpose
         for (const enrol of enrols.body) {
           if (enrol.type === 'TeacherEnrollment') {
             isteacher = true

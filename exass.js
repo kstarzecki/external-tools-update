@@ -20,8 +20,8 @@ const canvas = Canvas(url, token)
 
 const config = {
   account: '', // for later
-  courseId: '23019',
-  list: [23019, 23022, 23025, 23027, 23031, 23033, 23034, 23126, 24167]
+  courseId: '23019', // single course
+  list: [23019, 23022, 23025, 23027, 23031, 23033, 23034, 23126, 24167] // batch of courses
 }
 
 // create folders if they don't exist
@@ -232,7 +232,7 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
             let fileIdList = getUniqueFileUrls(sanitizedDescription)
             console.log(`- CID: ${courseId} - Getting Assignment ID: ${assignment.body.id}: ${assignment.body.name}`)
             if (fileIdList !== [] && fileIdList !== undefined) { // can be undefined for a number of reasons
-              var fileObjArr = await processFiles(courseId, fileIdList)
+              var fileObjArr = await processFiles(courseId, fileIdList) // var on purpose
               if (fileObjArr !== [] && fileObjArr !== undefined) { // can be undefined for a number of reasons
                 fileObjArr.forEach(file => {
                   fileDownloadList.push(file)
@@ -283,7 +283,7 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
             let qFileIdList = getUniqueFileUrls(quizQuestionsString)
             console.log(`- CID: ${courseId} - Getting Assignment ID: ${assignment.body.id}: ${assignment.body.name}`)
             if (qFileIdList !== [] && qFileIdList !== undefined) { // can be undefined for a number of reasons
-              var qFileObjArr = await processFiles(courseId, qFileIdList)
+              var qFileObjArr = await processFiles(courseId, qFileIdList) // var on purpose
               if (qFileObjArr !== [] && qFileObjArr !== undefined) { // can be undefined for a number of reasons
                 qFileObjArr.forEach(file => {
                   fileDownloadList.push(file)
@@ -360,8 +360,8 @@ async function downloadAttachmentsAndMakeXml (filesList, dir, aDir, eDir, attach
     }
     for (const obj of filesList) { // files list is array of objects that contains file info
       try {
-        var i = 0
-        var j = 0
+        var i = 0 // var on purpose
+        var j = 0 // var on purpose
         const normalizedName = replaceSpecialCharacters(obj.name) // remove special characters like å, ä, ö
 
         if (obj.lock === false) { // some files in Canvas can be locked, which results in no download url, causing an error
