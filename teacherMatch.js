@@ -2,24 +2,29 @@ require('dotenv').config()
 const Canvas = require('@kth/canvas-api')
 const ObjectsToCsv = require('objects-to-csv')
 const csv = require('csvtojson')
-const _ = require('underscore')
+const cliProgress = require('cli-progress')
 
-const token = process.env.CANVAS_API_TOKEN_TEST
-const url = process.env.CANVAS_API_URL_TEST
+const token = process.env.CANVAS_API_TOKEN
+const url = process.env.CANVAS_API_URL
 const canvas = Canvas(url, token)
 
-// Export files
-const teacherFile = './teacherOutput.csv'
-const studentFile = './studentOutput.csv'
-// Source file (mentimeter user export)
-const csvFilePath = './members-export.csv'
+const input = './members-short.csv'
+const output = './matched-list.csv'
 
 const canvasEmailList = []
-const teacherArr = []
-const studentArr = []
+const teachArr = []
+const studArr = []
+const designArr = []
+const taArr = []
 
-async function saveToCsv (arr, file) {
-  const csv = new ObjectsToCsv(arr)
+async function saveUniqueToCsv (arr, file) {
+  const uArr = arr.reduce((unique, o) => {
+    if (!unique.some(obj => obj.Name === o.Name && obj.Email === o.Email)) {
+      unique.push(o)
+    }
+    return unique
+  }, [])
+  const csv = new ObjectsToCsv(uArr)
   await csv.toDisk(file)
 
   console.log('-------------------------------------------------------')
@@ -28,34 +33,58 @@ async function saveToCsv (arr, file) {
   console.log('')
 }
 
-async function getUserRoles (emails, arr) {
+async function getUserRoles (emails) {
+  const bar = new cliProgress.SingleBar({
+    hideCursor: true
+  }, cliProgress.Presets.shades_classic)
+  console.log('Matching Users... \n')
+  bar.start(emails.length, 0)
   for (const email of emails) {
     try {
-      const users = await canvas.get(`accounts/1/users?search_term=${email}`)
-      const userID = users.body[0].id
-      try {
-        const enrols = await canvas.get(`users/${userID}/enrollments`)
-        var isteacher = false // var on purpose
-        for (const enrol of enrols.body) {
-          if (enrol.type === 'TeacherEnrollment') {
-            isteacher = true
+      const users = await canvas.list(`accounts/1/users?search_term=${email}`).toArray()
+      for (const user of users) {
+        if (user.login_id === email) {
+          try {
+            const enrols = await canvas.list(`users/${user.id}/enrollments`).toArray()
+            const userObj = {
+              Name: user.sortable_name,
+              Email: user.login_id,
+              Role: ''
+            }
+            if (enrols.some(e => e.type === 'TeacherEnrollment')) {
+              userObj.Role = 'Teacher'
+              teachArr.push(userObj)
+              bar.increment()
+            } else {
+              if (enrols.some(e => e.type === 'TaEnrollment')) {
+                userObj.Role = 'TA'
+                taArr.push(userObj)
+                bar.increment()
+              } else {
+                if (enrols.some(e => e.type === 'DesignerEnrollment')) {
+                  userObj.Role = 'Designer'
+                  designArr.push(userObj)
+                  bar.increment()
+                } else {
+                  userObj.Role = 'Student'
+                  studArr.push(userObj)
+                  bar.increment()
+                }
+              }
+            }
+            // bar.increment()
+          } catch (e) {
+            console.error(`Can't get enrol for ${user.id}. "${e}". Continuing...`)
+            bar.increment()
           }
-        }
-      } catch (e) {
-        console.error(`Can't get enrol "${e}". Continuing...`)
-      }
-      if (isteacher) {
-        teacherArr.push(_.where(arr, { Email: email })[0])
-      } else {
-        const role = _.where(arr, { Email: email })[0].Role
-        if (role === 'user') {
-          studentArr.push(_.where(arr, { Email: email })[0])
         }
       }
     } catch (e) {
-      console.error(`"${e}". Continuing...`)
+      console.error(`Cannot get ID for ${email}. "${e}". Continuing...`)
+      bar.increment()
     }
   }
+  bar.stop()
 }
 
 async function isolateEmails (arr) {
@@ -64,12 +93,22 @@ async function isolateEmails (arr) {
   })
 }
 
+async function concatUsers (arr1, arr2, arr3, arr4) {
+  const cArr = arr1.concat(arr2, arr3, arr4)
+  return cArr
+}
+
 async function start () {
-  const jsonArray = await csv().fromFile(csvFilePath)
+  const jsonArray = await csv().fromFile(input)
   await isolateEmails(jsonArray)
   await getUserRoles(canvasEmailList, jsonArray)
-  await saveToCsv(teacherArr, teacherFile)
-  await saveToCsv(studentArr, studentFile)
+  const exportArr = await concatUsers(designArr, teachArr, taArr, studArr)
+  console.log(`\n= Results ======= \n
+  * Designers:  ${designArr.length}, \n
+  * Teachers:   ${teachArr.length}, \n
+  * TA's:       ${taArr.length}, \n
+  * Students:   ${studArr.length} \n`)
+  await saveUniqueToCsv(exportArr, output)
 }
 
 start()
