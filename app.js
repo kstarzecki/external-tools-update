@@ -253,14 +253,14 @@ async function sanityCheck (foundTools) {
 }
 
 async function getAllTools (course) {
-  const toolSearchUrl = `/courses/${course.id}/external_tools`
+  const toolSearchUrl = `courses/${course.id}/external_tools`
   for await (const externalTool of canvas.list(toolSearchUrl)) {
     foundTools.push(createShortObject(course, externalTool))
   };
 }
 
 async function checkToolsByName (course, searchTerm) {
-  const toolSearchUrl = `/courses/${course.id}/external_tools`
+  const toolSearchUrl = `courses/${course.id}/external_tools`
   for await (const externalTool of canvas.list(toolSearchUrl)) {
     if (externalTool.name === searchTerm) {
       foundTools.push(createShortObject(course, externalTool))
@@ -269,7 +269,7 @@ async function checkToolsByName (course, searchTerm) {
 }
 
 async function checkToolsByURL (course, searchTerm) {
-  const toolSearchUrl = `/courses/${course.id}/external_tools`
+  const toolSearchUrl = `courses/${course.id}/external_tools`
   for await (const externalTool of canvas.list(toolSearchUrl)) {
     if (externalTool.url === searchTerm) {
       foundTools.push(createShortObject(course, externalTool))
@@ -278,7 +278,7 @@ async function checkToolsByURL (course, searchTerm) {
 }
 
 async function searchCourses () {
-  const courseSearchUrl = `/accounts/${config.account}/courses`
+  const courseSearchUrl = `accounts/${config.account}/courses`
   try {
     for await (const course of canvas.list(courseSearchUrl)) {
       const yearStarted = (new Date(course.start_at)).getFullYear()
@@ -302,11 +302,11 @@ async function searchCourses () {
 
 async function updateTool (courseId, toolId) {
   const body = config.toolFields
-  await canvas.requestUrl(`/courses/${courseId}/external_tools/${toolId}`, 'PUT', body)
+  await canvas.requestUrl(`courses/${courseId}/external_tools/${toolId}`, 'PUT', body)
   console.log(`Done with toolId: ${toolId}! Results below:`)
 
-  const updatedTool = await canvas.get(`/courses/${courseId}/external_tools/${toolId}`)
-  const course = await canvas.get(`/courses/${courseId}`)
+  const updatedTool = await canvas.get(`courses/${courseId}/external_tools/${toolId}`)
+  const course = await canvas.get(`courses/${courseId}`)
   console.log(createShortObject(course.body, updatedTool.body))
 }
 
