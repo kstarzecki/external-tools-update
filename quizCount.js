@@ -43,13 +43,29 @@ async function searchCourses () {
             if (course.sis_course_id != null) {
               for await (const quiz of canvas.list(`courses/${course.id}/quizzes`)) {
                 if (!quiz.unpublishable) {
-                  const courseObj = {
-                    CourseID: course.id,
-                    CourseSIS: course.sis_course_id,
-                    CourseName: course.name
+                  for await (const user of canvas.list(`courses/${course.id}/users?enrollment_role_id=9`)) {
+                    if (user !== 'undefined') {
+                      const courseObj = {
+                        CourseID: course.id,
+                        CourseSIS: course.sis_course_id,
+                        CourseName: course.name,
+                        CourseResponsibleName: user.name,
+                        CourseResponsibleEmail: user.email
+                      }
+                      courseArr.push(courseObj)
+                      console.log(courseObj)
+                    } else {
+                      const courseObj = {
+                        CourseID: course.id,
+                        CourseSIS: course.sis_course_id,
+                        CourseName: course.name,
+                        CourseResponsibleName: 'no course responsible',
+                        CourseResponsibleEmail: 'no course responsible'
+                      }
+                      courseArr.push(courseObj)
+                      console.log(courseObj)
+                    }
                   }
-                  courseArr.push(courseObj)
-                  console.log(courseObj)
                   break
                 }
               }
