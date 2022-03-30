@@ -27,23 +27,39 @@ function generateSEBConfig (courseID) {
   const sebConfig = convert.xml2js(xml, readOptions)
   let ruleString = ''
   const ruleArr = []
+
+  const regexArr = ['([\\w\\d]+\\.)?canvas\\.kth\\.se(\\/)?$', `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/assignments(\\/.*)?$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/external_tools\\/retrieve\\?display=full_width&url=https%3A%2F%2Fkth.quiz-lti-dub-prod.instructure.com(.*)?$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/modules(\\/.*)?$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/modules/items/([0-9]+)?$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/modules\\#module_([0-9]+)$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/pages\\/([a-zA-Z0-9_.-]+)\\?module_item_id=([0-9]+)$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/quizzes(\\/.*)?$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/student_view(\\/.*)?$`, `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/test_student(\\/.*)?$`, '([\\w\\d]+\\.)?canvas\\.kth\\.se\\/login(\\/.*)?$', '([\\w\\d]+\\.)?kth\\.mobius\\.cloud(\\/.*)?$', '([\\w\\d]+\\.)?login\\.sys\\.kth\\.se(\\/.*)?$', '([\\w\\d]+\\.)?login\\.ug\\.kth\\.se(\\/.*)?$', '([\\w\\d]+\\.)?saml-5\\.sys\\.kth\\.se(\\/.*)?$', '([\\w\\d]+\\.)?saml-5\\.ug\\.kth\\.se(\\/.*)?$', '([\\w\\d]+\\.)?sso\\.canvaslms\\.com\\/delegated_auth_pass_through\\?target=(.*)$', '([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses(\\/[0-9]+)\\/files\\/([a-zA-Z0-9_.-]+)\\?module_item_id=([0-9]+)$']
+
+  const stencilRuleObj = {
+    type: 'element',
+    name: 'dict',
+    elements: [
+      { type: 'element', name: 'key', elements: [{ type: 'text', text: 'active' }] },
+      { type: 'element', name: 'true', elements: [] },
+      { type: 'element', name: 'key', elements: [{ type: 'text', text: 'regex' }] },
+      { type: 'element', name: 'true', elements: [] },
+      { type: 'element', name: 'key', elements: [{ type: 'text', text: 'expression' }] },
+      { type: 'element', name: 'string', elements: [{ type: 'text', text: '' }] },
+      { type: 'element', name: 'key', elements: [{ type: 'text', text: 'action' }] },
+      { type: 'element', name: 'integer', elements: [{ type: 'text', text: '1' }] }
+    ]
+  }
   sebConfig.elements[1].elements[0].elements[3].elements[0].text = `https://canvas.kth.se/courses/${courseID}`// starturl
-  sebConfig.elements[1].elements[0].elements[237].elements[1].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}$`// URLFilterRules1
-  sebConfig.elements[1].elements[0].elements[237].elements[2].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/assignments(\\/.*)?$` // URLFilterRules2
-  sebConfig.elements[1].elements[0].elements[237].elements[3].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/external_tools\\/retrieve\\?display=full_width&url=https%3A%2F%2Fkth.quiz-lti-dub-prod.instructure.com(.*)?$` // URLFilterRules3
-  sebConfig.elements[1].elements[0].elements[237].elements[4].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/modules(\\/.*)?$` // URLFilterRules4
-  sebConfig.elements[1].elements[0].elements[237].elements[5].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/modules/items/([0-9]+)?$` // URLFilterRules5
-  sebConfig.elements[1].elements[0].elements[237].elements[6].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/modules\\#module_([0-9]+)$` // URLFilterRules6
-  sebConfig.elements[1].elements[0].elements[237].elements[7].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/pages\\/([a-zA-Z0-9_.-]+)\\?module_item_id=([0-9]+)$` // URLFilterRules7
-  sebConfig.elements[1].elements[0].elements[237].elements[8].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/quizzes(\\/.*)?$` // URLFilterRules8
-  sebConfig.elements[1].elements[0].elements[237].elements[9].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/student_view(\\/.*)?$`// URLFilterRules9
-  sebConfig.elements[1].elements[0].elements[237].elements[10].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/test_student(\\/.*)?$` // URLFilterRules10
-  sebConfig.elements[1].elements[0].elements[237].elements[18].elements[5].elements[0].text = `([\\w\\d]+\\.)?canvas\\.kth\\.se\\/courses\\/${courseID}\\/files\\/([a-zA-Z0-9_.-]+)\\?module_item_id=([0-9]+)$` // URLFilterRules11
+  sebConfig.elements[1].elements[0].elements[237].elements = [] // purge existing rules
+
+  for (let i = 0; i < regexArr.length; i++) {
+    const rule = JSON.parse(JSON.stringify(stencilRuleObj))
+    rule.elements[5].elements[0].text = regexArr[i]
+    sebConfig.elements[1].elements[0].elements[237].elements.push(rule)
+  }
+
   for (let i = 0; i < sebConfig.elements[1].elements[0].elements[237].elements.length; i++) {
     ruleArr.push(sebConfig.elements[1].elements[0].elements[237].elements[i].elements[5].elements[0].text)
     ruleString = ruleArr.join(';')
   }
+
   sebConfig.elements[1].elements[0].elements[245].elements[0].text = ruleString
+
   writeXML(sebConfig, courseID)
 }
 
