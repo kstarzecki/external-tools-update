@@ -15,7 +15,7 @@
     "url": "https://github.com/kstarzecki/external-tools-update.git"
   },
   "dependencies": {
-    "@kth/canvas-api": "^2.0",
+    "@kth/canvas-api": "^4.2.3",
     "cli-progress": "^3.9.1",
     "csvtojson": "^2.0.10",
     "dotenv": "^8.0.0",
