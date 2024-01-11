@@ -1,11 +1,11 @@
 require('dotenv').config()
-const Canvas = require('@kth/canvas-api')
+const Canvas = require("@kth/canvas-api").default
 const ObjectsToCsv = require('objects-to-csv')
 const inquirer = require('inquirer')
 
-const token = process.env.CANVAS_API_TOKEN
-const url = process.env.CANVAS_API_URL
-const canvas = Canvas(url, token)
+const canvasApiUrl = process.env.CANVAS_API_URL;
+const canvasApiToken = process.env.CANVAS_API_TOKEN;
+const canvas = new Canvas(canvasApiUrl, canvasApiToken);
 
 const foundTools = []
 const config = {
@@ -254,14 +254,14 @@ async function sanityCheck (foundTools) {
 
 async function getAllTools (course) {
   const toolSearchUrl = `courses/${course.id}/external_tools`
-  for await (const externalTool of canvas.list(toolSearchUrl)) {
+  for await (const externalTool of canvas.listItems(toolSearchUrl)) {
     foundTools.push(createShortObject(course, externalTool))
   };
 }
 
 async function checkToolsByName (course, searchTerm) {
   const toolSearchUrl = `courses/${course.id}/external_tools`
-  for await (const externalTool of canvas.list(toolSearchUrl)) {
+  for await (const externalTool of canvas.listItems(toolSearchUrl)) {
     if (externalTool.name === searchTerm) {
       foundTools.push(createShortObject(course, externalTool))
     }
@@ -270,7 +270,7 @@ async function checkToolsByName (course, searchTerm) {
 
 async function checkToolsByURL (course, searchTerm) {
   const toolSearchUrl = `courses/${course.id}/external_tools`
-  for await (const externalTool of canvas.list(toolSearchUrl)) {
+  for await (const externalTool of canvas.listItems(toolSearchUrl)) {
     if (externalTool.url === searchTerm) {
       foundTools.push(createShortObject(course, externalTool))
     }
@@ -280,7 +280,7 @@ async function checkToolsByURL (course, searchTerm) {
 async function searchCourses () {
   const courseSearchUrl = `accounts/${config.account}/courses`
   try {
-    for await (const course of canvas.list(courseSearchUrl)) {
+    for await (const course of canvas.listItems(courseSearchUrl)) {
       const yearStarted = (new Date(course.start_at)).getFullYear()
       if (yearStarted >= config.year || course.start_at === null) {
         // Courses with start date = null, get a 1970 in `yearStarted` variable, hence direct check
