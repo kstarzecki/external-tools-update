@@ -7,7 +7,6 @@ const canvas = new Canvas(process.env.CANVAS_API_URL, process.env.CANVAS_API_TOK
 const logFilePath = path.resolve(__dirname, "processed_courses.log");
 const failedLogPath = path.resolve(__dirname, "failed_courses.log");
 
-// Define module/page structure — only title and indent here
 const policyModules = [
   {
     title: "Kursspecifik information om generativ AI",
@@ -33,13 +32,16 @@ const policyModules = [
   },
 ];
 
-const termIds = [];
-const specificCourseIds = [9298, 1234, 5678];
+const sisTermIds = ["20232"]; //2023 HT
+const specificCourseIds = [];
 
 function getProcessedCourses() {
   if (!fs.existsSync(logFilePath)) return new Set();
-  const lines = fs.readFileSync(logFilePath, "utf-8").split("\n").filter(Boolean);
-  return new Set(lines.map(id => id.trim()));
+  const lines = fs
+    .readFileSync(logFilePath, "utf-8")
+    .split("\n")
+    .filter(Boolean);
+  return new Set(lines.map((id) => id.trim()));
 }
 
 function logProcessedCourse(courseId) {
@@ -62,64 +64,97 @@ async function addPolicyModulesToCourse(courseId) {
           continue;
         }
 
-        const createdPage = await canvas.request(`courses/${courseId}/pages`, 'POST', {
-          wiki_page: {
-            title: page.title,
-            body,
-            published: true,
-          },
-        });
+        const createdPage = await canvas.request(
+          `courses/${courseId}/pages`,
+          "POST",
+          {
+            wiki_page: {
+              title: page.title,
+              body,
+              published: false,
+            },
+          }
+        );
 
         createdPages.push({ ...createdPage.body, indent: page.indent ?? 0 });
       }
 
-      const createdModule = await canvas.request(`courses/${courseId}/modules`, 'POST', {
-        module: {
-          name: moduleDef.title,
-          published: true,
-        },
-      });
+      const createdModule = await canvas.request(
+        `courses/${courseId}/modules`,
+        "POST",
+        {
+          module: {
+            name: moduleDef.title,
+            published: false,
+          },
+        }
+      );
 
       for (const page of createdPages) {
-        await canvas.request(`courses/${courseId}/modules/${createdModule.body.id}/items`, 'POST', {
-          module_item: {
-            type: 'Page',
-            page_url: page.url,
-            published: true,
-            indent: page.indent ?? 0,
-          },
-        });
+        await canvas.request(
+          `courses/${courseId}/modules/${createdModule.body.id}/items`,
+          "POST",
+          {
+            module_item: {
+              type: "Page",
+              page_url: page.url,
+              published: false,
+              indent: page.indent ?? 0,
+            },
+          }
+        );
       }
     }
 
     logProcessedCourse(courseId);
-    console.log(`✅ Completed course ID: ${courseId}`);
-
   } catch (error) {
     console.error(`❌ Error in course ID ${courseId}:`, error.message);
     logFailedCourse(courseId);
   }
 }
 
+async function resolveNumericTermIds(sisTermIds) {
+  const numericIds = [];
+
+  for (const sisId of sisTermIds) {
+    console.log(`🔎 Resolving numeric term ID for SIS term "${sisId}"…`);
+    try {
+      // Use canvas.get(...) rather than canvas.request for this endpoint
+      const resp = await canvas.get(`accounts/1/terms/sis_term_id:${sisId}`);
+      const term = resp.body;
+      numericIds.push(term.id);
+      console.log(`✅ SIS term ${sisId} → numeric term ${term.id}`);
+    } catch (e) {
+      console.error(`⚠️ Could not resolve SIS term ${sisId}:`, e.message);
+    }
+  }
+
+  return numericIds;
+}
+
+/**
+ * Fetch all courses for each numeric term ID and print each course.id.
+ * Returns the array of distinct course IDs.
+ */
 async function getCoursesFromTerms(termIds) {
   const allCourseIds = new Set();
 
   for (const termId of termIds) {
-    console.log(`🔎 Fetching courses for term ID: ${termId}...`);
-    const coursePages = canvas.listPages("accounts/11/courses", {
+    console.log(`\n🔎 Fetching courses for numeric term ID: ${termId}…`);
+
+    let fetchedCount = 0;
+
+    // listItems on "accounts/1/courses" with enrollment_term_id
+    for await (const course of canvas.listItems("accounts/1/courses", {
       enrollment_term_id: termId,
       per_page: 100,
-      published: true,
-    });
-
-    let count = 0;
-    for await (const courses of coursePages) {
-      for (const course of courses) {
-        allCourseIds.add(course.id);
-        count++;
-      }
+    })) {
+      fetchedCount++;
+      allCourseIds.add(course.id);
+      console.log(course.id); // print the actual course ID
     }
-    console.log(`✅ Found ${count} courses for term ID ${termId}`);
+
+    console.log(`✅ Fetched ${fetchedCount} total courses for term ${termId}.\n`);
   }
 
   return Array.from(allCourseIds);
@@ -129,24 +164,38 @@ async function start() {
   const alreadyProcessed = getProcessedCourses();
 
   let courseIds = [];
-  if (termIds.length > 0) {
-    courseIds = await getCoursesFromTerms(termIds);
+  if (sisTermIds.length > 0) {
+    // 1. Resolve SIS → numeric
+    const numericTermIds = await resolveNumericTermIds(sisTermIds);
+
+    // 2. Fetch + print all course IDs under each numeric term
+    courseIds = await getCoursesFromTerms(numericTermIds);
   } else if (specificCourseIds.length > 0) {
     courseIds = specificCourseIds;
   }
 
-  const filteredCourseIds = courseIds.filter(id => !alreadyProcessed.has(String(id)));
-  if (filteredCourseIds.length === 0) {
+  // Filter out those we've already processed
+  const filtered = courseIds.filter(
+    (id) => !alreadyProcessed.has(String(id))
+  );
+  if (filtered.length === 0) {
     console.log("No unprocessed course IDs remaining.");
     return;
   }
 
-  console.log(`🚀 Processing ${filteredCourseIds.length} course(s)...\n`);
-  for (const id of filteredCourseIds) {
+  console.log(`\n🚀 Processing ${filtered.length} course(s)…\n`);
+  let count = 0;
+  for (const id of filtered) {
     await addPolicyModulesToCourse(id);
+    count++;
+    process.stdout.write(".");
+    if (count % 20 === 0) {
+      process.stdout.write(` ${count} processed (last: ${id})\n`);
+    }
   }
-
-  console.log("\n✅ All done.");
+  console.log(`\n\n✅ Done processing ${count} course(s).`);
 }
 
-start();
+start().catch((err) => {
+  console.error("Unexpected error:", err);
+});
