@@ -299,6 +299,9 @@ async function getAssignments (courseId, assIds, parsedAssignments, fileDownload
             // console.log(currentQuiz)
           }
         }
+        if (assignment.body.submission_types.includes('external_tool') && assignment.body.external_tool_tag.attributes.url == 'https://kth.quiz-lti-dub-prod.instructure.com/lti/launch'){ //New Quiz condition
+          
+        }
       }
     } catch (e) {
       console.error(`- CID: ${courseId} - GET ERROR: AssID: ${assignmentId}: "${e}". Continuing...`)
